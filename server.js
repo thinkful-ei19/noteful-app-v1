@@ -29,18 +29,26 @@ app.use(function (req, res, next) {
 });
 
 // Catch-all Error handler
-// NOTE: we'll prevent stacktrace leak in later exercise
 app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.json({
     message: err.message,
-    error: err
+    error: app.get('env') === 'development' ? err : {}
   });
 });
 
+app.startServer = function (port) {
+  return new Promise((resolve, reject) => {
+    this.listen(port, function () {
+      this.stopServer = require('util').promisify(this.close);
+      resolve(this);
+    }).on('error', reject);
+  });
+};
+
 // Listen for incoming connections
-app.listen(PORT, function () {
-  console.info(`Server listening on ${this.address().port}`);
-}).on('error', err => {
-  console.error(err);
-});
+if (require.main === module) {
+  app.startServer(PORT);
+}
+
+module.exports = app; // Export for testing
