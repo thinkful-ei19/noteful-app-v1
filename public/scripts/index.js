@@ -12,5 +12,5 @@ $(document).ready(function () {
   //   });
 
   // DRY Solution
-  noteful.doSearch();
+  noteful.doSearchAndRender();
 });
