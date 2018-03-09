@@ -58,11 +58,15 @@ const noteful = (function () {
       const searchTerm = $('.js-note-search-entry').val();
       store.currentSearchTerm = searchTerm ? { searchTerm } : {};
 
-      api.search(store.currentSearchTerm)
-        .then(searchResponse => {
-          store.notes = searchResponse;
-          render();
-        });
+      // Promisified Solution
+      // api.search(store.currentSearchTerm)
+      //   .then(searchResponse => {
+      //     store.notes = searchResponse;
+      //     render();
+      //   });
+
+      // DRY Solution
+      doSearch();
 
     });
   }
@@ -81,28 +85,43 @@ const noteful = (function () {
 
       if (noteObj.id) {
 
+        // Promisified Solution
+        // api.update(store.currentNote.id, noteObj)
+        //   .then(updateResponse => {
+        //     store.currentNote = updateResponse;
+        //     return api.search(store.currentSearchTerm);
+        //   })
+        //   .then(searchResponse => {
+        //     store.notes = searchResponse;
+        //     render();
+        //   });
+
+        // DRY Solution
         api.update(store.currentNote.id, noteObj)
           .then(updateResponse => {
             store.currentNote = updateResponse;
-            return api.search(store.currentSearchTerm);
           })
-          .then(searchResponse => {
-            store.notes = searchResponse;
-            render();
-          });
+          .then(doSearch);
 
       } else {
 
+        // Promisified Solution
+        // api.create(noteObj)
+        //   .then(createResponse => {
+        //     store.currentNote = createResponse;
+        //     return api.search(store.currentSearchTerm);
+        //   })
+        //   .then(searchResponse => {
+        //     store.notes = searchResponse;
+        //     render();
+        //   });
+
+        // Dry Solution
         api.create(noteObj)
           .then(createResponse => {
             store.currentNote = createResponse;
-            return api.search(store.currentSearchTerm);
           })
-          .then(searchResponse => {
-            store.notes = searchResponse;
-            render();
-          });
-
+          .then(doSearch);
       }
 
     });
@@ -124,17 +143,36 @@ const noteful = (function () {
 
       const noteId = getNoteIdFromElement(event.currentTarget);
 
+      // Promisified Solution
+      // api.remove(noteId)
+      //   .then(() => api.search(store.currentSearchTerm))
+      //   .then(searchResponse => {
+      //     store.notes = searchResponse;
+      //     if (noteId === store.currentNote.id) {
+      //       store.currentNote = {};
+      //     }
+      //     render();
+      //   });
+
+      // Bonus Challenge DRY Solution
       api.remove(noteId)
-        .then(() => api.search(store.currentSearchTerm))
-        .then(searchResponse => {
-          store.notes = searchResponse;
+        .then(() => {
           if (noteId === store.currentNote.id) {
             store.currentNote = {};
           }
-          render();
-        });
-
+        })
+        .then(doSearch);
     });
+  }
+
+  // DRY Search
+  function doSearch() {
+    return api.search(store.currentSearchTerm)
+      .then(updateResponse => {
+        store.notes = updateResponse;
+        render();
+      });
+
   }
 
   function bindEventListeners() {
@@ -150,6 +188,7 @@ const noteful = (function () {
   return {
     render: render,
     bindEventListeners: bindEventListeners,
+    doSearch
   };
 
 }());
